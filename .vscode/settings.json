@@ -1,1 +1,6 @@
-{}
+{
+	"java.configuration.updateBuildConfiguration": "automatic",
+	"yaml.schemas": {
+		"./.vscode/bukkit-plugin-yml.schema.json": "src/main/resources/plugin.yml"
+	}
+}

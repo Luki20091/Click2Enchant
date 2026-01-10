@@ -1,0 +1,103 @@
+# Click2Enchant configuration
+# Color codes supported with '&' (e.g. &c, &7, &b)
+
+configVersion: 1
+
+# Enables debug logging/UI for Click2Enchant.
+debug: false
+
+messages:
+  prefix: "&7[&bClick2Enchant&7]&r "
+  noPermission: "&cBrak uprawnień."
+  mendingBanned: "&cMending jest całkowicie zablokowany."
+  tooManyEnchants: "&cNie można nałożyć więcej niż &e{max}&c enchantów na item."
+  itemHasTooManyEnchants: "&cNie można rozdzielić: ten item ma więcej niż &e{max}&c enchanty."
+  notEnoughXp: "&cNie masz wystarczająco poziomów XP. Wymagane: &e{cost}&c."
+  reloadConfig: "&aKonfiguracja przeładowana."
+  usage:
+    toggleEnchant: "&cPoprawne użycie:&r /toggleenchant"
+    toggleGlobalEnchant: "&cPoprawne użycie:&r /toggleglobalenchant"
+  toggleEnchant:
+    enabled: "&aKlikanie enchantów włączone."
+    disabled: "&cKlikanie enchantów wyłączone."
+  globalEnchant:
+    enabled: "&aKlikanie enchantów włączone globalnie."
+    disabled: "&cKlikanie enchantów wyłączone globalnie."
+  notEnoughSpace: "&cNie masz wystarczająco miejsca w ekwipunku."
+
+permissions:
+  # If false, the feature still exists but doesn't require the permission node.
+  enforceCommands: true
+  enforceMechanics: false
+
+limits:
+  # Max number of enchants allowed on a single item. When exceeded, enchanting is blocked.
+  # Disenchanting is also blocked if an item already has more than this amount.
+  maxEnchantsPerItem: 4
+
+xp:
+  enabled: true
+  # If true, Creative players won't be charged/blocked by XP costs.
+  bypassCreative: true
+  costs:
+    enchant:
+      enabled: true
+      # Costs are in XP LEVELS. Decimals allowed (e.g. 0.5).
+      # Internally levels are converted to raw XP points based on the player's current level.
+      # Default cost is: enchantLevel * defaultPerLevel
+      defaultPerLevel: 1.0
+      # Optional overrides per enchant level
+      perLevel:
+        1: 1.0
+        2: 2.0
+        3: 3.0
+        4: 4.0
+        5: 5.0
+    disenchant:
+      enabled: true
+      # Costs are in XP LEVELS. Decimals allowed.
+      defaultPerLevel: 1.0
+      perLevel:
+        1: 1.0
+        2: 2.0
+        3: 3.0
+        4: 4.0
+        5: 5.0
+      # Small refund after successful disenchant (percentage of the cost)
+      refundPercent: 0.25
+    splitBook:
+      enabled: true
+      # Flat cost for splitting a book (XP LEVELS)
+      flat: 1.0
+
+mechanics:
+  enchant:
+    enabled: true
+    sendNoPermissionMessage: false
+  combineBooks:
+    enabled: false
+    sendNoPermissionMessage: false
+  disenchant:
+    enabled: true
+    sendNoPermissionMessage: false
+  splitBook:
+    enabled: true
+    sendNoPermissionMessage: false
+
+behavior:
+  # When true, ops (or anyone with bypass permission) can use mechanics even if globally/per-player disabled.
+  bypassDisableChecksWithPermission: true
+
+data:
+  # Where the plugin stores global/per-player disable state.
+  file: "plugins/Click2Enchant/disabled.yaml"
+
+# Permission nodes (for reference)
+# - click2enchant.command.toggleenchant    -> /toggleenchant
+# - click2enchant.toggleglobalenchant      -> /toggleglobalenchant
+# - click2enchant.command.reload           -> /click2enchantreload
+# - click2enchant.mechanic.enchant         -> mechanika enchant (nakładanie enchantów na item)
+# - click2enchant.mechanic.combinebooks    -> mechanika łączenie książek
+# - click2enchant.mechanic.disenchant      -> mechanika disenchant (wyciąganie enchantów)
+# - click2enchant.mechanic.splitbook       -> mechanika splitbook (rozdzielanie książek)
+# - click2enchant.bypass.disabled          -> omija global/per-player disable

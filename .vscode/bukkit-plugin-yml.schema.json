@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Bukkit/Spigot plugin.yml",
+  "type": "object",
+  "required": ["name", "version", "main"],
+  "additionalProperties": true,
+  "properties": {
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "main": { "type": "string" },
+    "api-version": { "type": "string" },
+    "description": { "type": "string" },
+    "authors": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "website": { "type": "string" },
+    "depend": { "type": "array", "items": { "type": "string" } },
+    "softdepend": { "type": "array", "items": { "type": "string" } },
+    "loadbefore": { "type": "array", "items": { "type": "string" } },
+    "libraries": { "type": "array", "items": { "type": "string" } },
+    "commands": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "description": { "type": "string" },
+          "usage": { "type": "string" },
+          "aliases": { "type": "array", "items": { "type": "string" } },
+          "permission": { "type": "string" },
+          "permission-message": { "type": "string" }
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "description": { "type": "string" },
+          "default": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "boolean" }
+            ]
+          },
+          "children": {
+            "type": "object",
+            "additionalProperties": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -6,31 +6,45 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Objects;
 
 public final class Click2Enchant extends JavaPlugin {
-    DisableCommandHandler command1;
+    private static Click2Enchant instance;
+
+    private DisableCommandHandler disableCommandHandler;
+
+    public static Click2Enchant getInstance() {
+        return instance;
+    }
 
     @Override
     public void onEnable() {
-        Bukkit.getPluginManager().registerEvents(new ClickHandler(), this);
+        instance = this;
 
-        command1 = new DisableCommandHandler();
-        RenameCommandHandler command2 = new RenameCommandHandler();
-        GlobalEnchantCommand command3 = new GlobalEnchantCommand();
-        GlobalRenameCommand command4 = new GlobalRenameCommand();
+        saveDefaultConfig();
 
-        Objects.requireNonNull(getCommand("toggleenchant")).setExecutor(command1);
-        Objects.requireNonNull(getCommand("toggleenchant")).setTabCompleter(command1);
-        Objects.requireNonNull(getCommand("toggleglobalenchant")).setExecutor(command3);
-        Objects.requireNonNull(getCommand("toggleglobalenchant")).setTabCompleter(command3);
-        Objects.requireNonNull(getCommand("toggleglobalrename")).setExecutor(command4);
-        Objects.requireNonNull(getCommand("toggleglobalrename")).setTabCompleter(command4);
-        Objects.requireNonNull(getCommand("rename")).setExecutor(command2);
-        Objects.requireNonNull(getCommand("rename")).setTabCompleter(command2);
+        disableCommandHandler = new DisableCommandHandler();
+        GlobalEnchantCommand globalEnchantCommand = new GlobalEnchantCommand(disableCommandHandler);
+        ReloadConfigCommand reloadConfigCommand = new ReloadConfigCommand();
 
-        System.out.println("Enabled.");
+        Bukkit.getPluginManager().registerEvents(disableCommandHandler, this);
+        Bukkit.getPluginManager().registerEvents(new ClickHandler(disableCommandHandler), this);
+
+        Objects.requireNonNull(getCommand("toggleenchant")).setExecutor(disableCommandHandler);
+        Objects.requireNonNull(getCommand("toggleenchant")).setTabCompleter(disableCommandHandler);
+        Objects.requireNonNull(getCommand("toggleglobalenchant")).setExecutor(globalEnchantCommand);
+        Objects.requireNonNull(getCommand("toggleglobalenchant")).setTabCompleter(globalEnchantCommand);
+
+        Objects.requireNonNull(getCommand("click2enchantreload")).setExecutor(reloadConfigCommand);
+        Objects.requireNonNull(getCommand("click2enchantreload")).setTabCompleter(reloadConfigCommand);
+
+        getLogger().info("Enabled.");
     }
 
     @Override
     public void onDisable() {
-        command1.onDisable();
+        if (disableCommandHandler != null) {
+            disableCommandHandler.onDisable();
+            disableCommandHandler = null;
+        }
+
+        instance = null;
     }
 }

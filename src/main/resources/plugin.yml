@@ -1,34 +1,67 @@
 name: Click2Enchant
 version: '${project.version}'
 main: org.betterservernetwork.click2enchant.Click2Enchant
-api-version: '1.18'
+api-version: '1.21'
 commands:
   toggleenchant:
     description: Toggles clicking to enchant and disenchant item.
     usage: /toggleenchant
-  rename:
-    description: Renames item in hand.
-    usage: /rename <name>
-    aliases: [rn]
+    aliases: [enchantowanie]
+    permission: click2enchant.command.toggleenchant
   toggleglobalenchant:
     description: Toggles clicking to enchant and disenchant item for everyone.
     usage: /toggleglobalenchant
     permission: click2enchant.toggleglobalenchant
-  toggleglobalrename:
-    description: Toggles usage of the renaming command for everyone.
-    usage: /toggleglobalrename
-    permission: click2enchant.toggleglobalrename
+  click2enchantreload:
+    description: Przeladowuje konfiguracje pluginu.
+    usage: /click2enchantreload
+    aliases: [c2ereload]
+    permission: click2enchant.command.reload
 
 permissions:
   click2enchant.*:
     default: op
     description: Full use of all commands.
     children:
+      click2enchant.command.toggleenchant: true
       click2enchant.toggleglobalenchant: true
-      click2enchant.toggleglobalrename: true
+      click2enchant.command.reload: true
+      click2enchant.mechanic.enchant: true
+      click2enchant.mechanic.combinebooks: true
+      click2enchant.mechanic.disenchant: true
+      click2enchant.mechanic.splitbook: true
+      click2enchant.bypass.disabled: true
+      click2enchant.debug: true
+
+  click2enchant.command.toggleenchant:
+    default: op
+    description: Allows usage of /toggleenchant
+
   click2enchant.toggleglobalenchant:
     default: op
     description: Allows usage of /toggleglobalenchant
-  click2enchant.toggleglobalrename:
+
+  click2enchant.command.reload:
     default: op
-    description: Allows usage of /toggleglobalrename
+    description: Pozwala przeladowac konfiguracje pluginu
+
+  click2enchant.bypass.disabled:
+    default: op
+    description: Bypasses global/per-player disable checks
+
+  click2enchant.debug:
+    default: op
+    description: Receives Click2Enchant debug UI/messages when debug is enabled
+
+  click2enchant.mechanic.enchant:
+    default: op
+    description: Allows applying enchants to items by clicking with enchanted books
+  click2enchant.mechanic.combinebooks:
+    default: op
+    description: Allows combining enchanted books by clicking one book onto another
+  click2enchant.mechanic.disenchant:
+    default: op
+    description: Allows extracting enchants from an item into an enchanted book (right-click)
+  click2enchant.mechanic.splitbook:
+    default: op
+    description: Allows splitting enchanted books (right-click)
