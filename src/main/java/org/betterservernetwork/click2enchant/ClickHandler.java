@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 
@@ -30,6 +31,47 @@ public class ClickHandler implements Listener {
 
     public ClickHandler(DisableCommandHandler disableHandler) {
         this.disableHandler = disableHandler;
+    }
+
+    private boolean requirePlayerInventoryScreen() {
+        Click2Enchant plugin = Click2Enchant.getInstance();
+        return plugin != null && plugin.getConfig().getBoolean("ui.requirePlayerInventoryScreen", true);
+    }
+
+    private boolean isPlayerInventoryScreen(InventoryClickEvent event) {
+        if (event == null || event.getView() == null || event.getView().getTopInventory() == null) return true;
+        return event.getView().getTopInventory().getType() == InventoryType.CRAFTING;
+    }
+
+    private boolean isIgnoredMaterial(Material material) {
+        if (material == null) return false;
+        if (material.isAir()) return true;
+
+        Click2Enchant plugin = Click2Enchant.getInstance();
+        if (plugin == null) return false;
+
+        String name = material.name();
+
+        for (String raw : plugin.getConfig().getStringList("filters.bannedItems")) {
+            if (raw == null || raw.isBlank()) continue;
+            Material m = Material.matchMaterial(raw.trim());
+            if (m != null && m == material) return true;
+            if (raw.trim().equalsIgnoreCase(name)) return true;
+        }
+
+        for (String raw : plugin.getConfig().getStringList("filters.bannedMaterialNameSuffixes")) {
+            if (raw == null || raw.isBlank()) continue;
+            String suffix = raw.trim().toUpperCase(Locale.ROOT);
+            if (!suffix.isEmpty() && name.endsWith(suffix)) return true;
+        }
+
+        for (String raw : plugin.getConfig().getStringList("filters.bannedMaterialNamePrefixes")) {
+            if (raw == null || raw.isBlank()) continue;
+            String prefix = raw.trim().toUpperCase(Locale.ROOT);
+            if (!prefix.isEmpty() && name.startsWith(prefix)) return true;
+        }
+
+        return false;
     }
 
     private boolean hasBaseAccess(Player player) {
@@ -292,12 +334,16 @@ public class ClickHandler implements Listener {
         // Players without base permission are completely ignored by this plugin.
         if (!hasBaseAccess(player)) return;
 
+        // When a non-player inventory (chest/anvil/etc) is open, optionally disable mechanics entirely.
+        if (requirePlayerInventoryScreen() && !isPlayerInventoryScreen(event)) return;
+
         ItemStack current = event.getCurrentItem();
         ItemStack cursor = event.getCursor();
 
         if (!mechanicsEnabled("enchant", true)) return;
 
         if (current == null || current.getType().isAir()) return;
+        if (isIgnoredMaterial(current.getType())) return;
         if (event.getClick() != ClickType.LEFT) return;
         if (cursor == null || cursor.getType() != Material.ENCHANTED_BOOK) return;
         if (!(cursor.getItemMeta() instanceof EnchantmentStorageMeta)) return;
@@ -431,7 +477,8 @@ public class ClickHandler implements Listener {
 
             current.setItemMeta(meta2);
             event.setCurrentItem(current);
-            event.setCursor(player.getItemOnCursor());
+            // InventoryClickEvent#setCursor is deprecated; update cursor via Player API.
+            player.setItemOnCursor(player.getItemOnCursor());
 
             if (chargeXp) {
                 double cost = 0D;
@@ -455,7 +502,6 @@ public class ClickHandler implements Listener {
                 if (!tryChargeXpLevels(player, "enchant", cost)) {
                     event.setCurrentItem(currentBefore);
                     player.setItemOnCursor(cursorBefore);
-                    event.setCursor(cursorBefore);
                     playVillagerNo(player);
                     return;
                 }
@@ -535,10 +581,9 @@ public class ClickHandler implements Listener {
 
         if (meta2.hasStoredEnchants()) {
             cursor.setItemMeta(meta2);
-            event.setCursor(cursor);
+            player.setItemOnCursor(cursor);
         } else {
             player.setItemOnCursor(new ItemStack(Material.AIR));
-            event.setCursor(new ItemStack(Material.AIR));
         }
 
         if (chargeXp) {
@@ -563,7 +608,6 @@ public class ClickHandler implements Listener {
             if (!tryChargeXpLevels(player, "enchant", cost)) {
                 event.setCurrentItem(currentBefore);
                 player.setItemOnCursor(cursorBefore);
-                event.setCursor(cursorBefore);
                 playVillagerNo(player);
                 return;
             }
@@ -583,6 +627,8 @@ public class ClickHandler implements Listener {
         // Players without base permission are completely ignored by this plugin.
         if (!hasBaseAccess(player)) return;
 
+        if (requirePlayerInventoryScreen() && !isPlayerInventoryScreen(event)) return;
+
         ItemStack current = event.getCurrentItem();
 
         if (!mechanicsEnabled("disenchant", true)) return;
@@ -590,6 +636,7 @@ public class ClickHandler implements Listener {
         if (current == null) return;
         if (event.getClick() != ClickType.RIGHT) return;
         if (current.getType().isAir()) return;
+        if (isIgnoredMaterial(current.getType())) return;
         if (current.getEnchantments().isEmpty()) return;
 
         Tools.debug(player, "Disenchant click detected: current=" + current.getType() + ", enchants=" + current.getEnchantments().size());
@@ -685,6 +732,8 @@ public class ClickHandler implements Listener {
         // Players without base permission are completely ignored by this plugin.
         if (!hasBaseAccess(player)) return;
 
+        if (requirePlayerInventoryScreen() && !isPlayerInventoryScreen(event)) return;
+
         ItemStack current = event.getCurrentItem();
 
         if (!mechanicsEnabled("splitBook", true)) return;
@@ -693,6 +742,7 @@ public class ClickHandler implements Listener {
         if (event.getClick() != ClickType.RIGHT) return;
         if (current.getType().isAir()) return;
         if (current.getType() != Material.ENCHANTED_BOOK) return;
+        if (isIgnoredMaterial(current.getType())) return;
 
         Tools.debug(player, "SplitBook click detected: current=ENCHANTED_BOOK");
 

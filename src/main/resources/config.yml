@@ -88,6 +88,29 @@ behavior:
   # When true, ops (or anyone with bypass permission) can use mechanics even if globally/per-player disabled.
   bypassDisableChecksWithPermission: true
 
+filters:
+  # Items matching these filters will be ignored by Click2Enchant.
+  # This means: no enchant/apply, no disenchant, no splitBook handling for them.
+  # Useful to exclude materials like all ingots.
+  bannedItems:
+    - IRON_INGOT
+    - GOLD_INGOT
+    - COPPER_INGOT
+    - NETHERITE_INGOT
+    - STICK
+    - PAPER
+    - PLAYER_HEAD
+  # Optional: ban by material name suffix/prefix (case-insensitive).
+  # Example: "_INGOT" will ignore every material ending with "_INGOT".
+  bannedMaterialNameSuffixes:
+    - _INGOT
+  bannedMaterialNamePrefixes: []
+
+ui:
+  # If true, Click2Enchant mechanics only work when the player has their own inventory screen open
+  # (i.e. top inventory is CRAFTING). When a chest/anvil/etc is open, mechanics won't run.
+  requirePlayerInventoryScreen: true
+
 data:
   # Where the plugin stores global/per-player disable state.
   file: "plugins/Click2Enchant/disabled.yaml"
