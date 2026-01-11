@@ -190,9 +190,69 @@ public class ClickHandler implements Listener {
         if (player == null) return 0;
         if (levelCost <= 0D) return 0;
 
+        // Kept for backward compatibility with older code paths.
+        // NOTE: XP per level is non-linear; use expPointsToRemoveForLevels/expPointsToAddForLevels for accuracy.
         int currentLevel = Math.max(0, player.getLevel());
         int pointsPerLevel = Math.max(1, xpForNextLevel(currentLevel));
         double points = levelCost * pointsPerLevel;
+        return (int) Math.max(0, Math.ceil(points));
+    }
+
+    /**
+     * Converts a "cost in XP levels" to the equivalent XP points to REMOVE from the player,
+     * taking into account that XP per level is non-linear.
+     */
+    private int expPointsToRemoveForLevels(Player player, double levelCost) {
+        if (player == null) return 0;
+        if (levelCost <= 0D) return 0;
+
+        int level = Math.max(0, player.getLevel());
+        double remainingLevels = Math.max(0D, levelCost);
+        double points = 0D;
+
+        // Removing 1 "level" corresponds to subtracting the XP required to go from (level) -> (level-1),
+        // i.e. xpForNextLevel(level-1). Preserve current progress by operating on total XP points.
+        while (remainingLevels > 1e-9 && level > 0) {
+            double step = Math.min(1D, remainingLevels);
+            int pointsForThisLevel = Math.max(0, xpForNextLevel(level - 1));
+            points += step * pointsForThisLevel;
+            remainingLevels -= step;
+            if (step >= 1D - 1e-9) {
+                level--;
+            }
+        }
+
+        // Not enough levels available to pay this cost.
+        if (remainingLevels > 1e-6) {
+            return Integer.MAX_VALUE;
+        }
+
+        return (int) Math.max(0, Math.ceil(points));
+    }
+
+    /**
+     * Converts a "refund in XP levels" to the equivalent XP points to ADD to the player.
+     */
+    private int expPointsToAddForLevels(Player player, double levelAmount) {
+        if (player == null) return 0;
+        if (levelAmount <= 0D) return 0;
+
+        int level = Math.max(0, player.getLevel());
+        double remainingLevels = Math.max(0D, levelAmount);
+        double points = 0D;
+
+        // Adding 1 "level" corresponds to adding the XP required to go from (level) -> (level+1),
+        // i.e. xpForNextLevel(level).
+        while (remainingLevels > 1e-9) {
+            double step = Math.min(1D, remainingLevels);
+            int pointsForThisLevel = Math.max(0, xpForNextLevel(level));
+            points += step * pointsForThisLevel;
+            remainingLevels -= step;
+            if (step >= 1D - 1e-9) {
+                level++;
+            }
+        }
+
         return (int) Math.max(0, Math.ceil(points));
     }
 
@@ -277,11 +337,11 @@ public class ClickHandler implements Listener {
         if (costLevels <= 0D) return true;
         if (bypassXpForPlayer(player)) return true;
 
-        int costPoints = pointsForLevelCost(player, costLevels);
+        int costPoints = expPointsToRemoveForLevels(player, costLevels);
         if (costPoints <= 0) return true;
 
         int total = getTotalExpPoints(player);
-        if (total < costPoints) {
+        if (costPoints == Integer.MAX_VALUE || total < costPoints) {
             sendNotEnoughXp(player, costLevels);
             return false;
         }
@@ -297,7 +357,8 @@ public class ClickHandler implements Listener {
     private void refundXpLevels(Player player, double refundLevels) {
         if (refundLevels <= 0D) return;
         if (bypassXpForPlayer(player)) return;
-        int refundPoints = pointsForLevelCost(player, refundLevels);
+
+        int refundPoints = expPointsToAddForLevels(player, refundLevels);
         if (refundPoints <= 0) return;
         int total = getTotalExpPoints(player);
         setTotalExpPoints(player, total + refundPoints);
@@ -477,8 +538,7 @@ public class ClickHandler implements Listener {
 
             current.setItemMeta(meta2);
             event.setCurrentItem(current);
-            // InventoryClickEvent#setCursor is deprecated; update cursor via Player API.
-            player.setItemOnCursor(player.getItemOnCursor());
+            // Cursor already updated via Player#setItemOnCursor above.
 
             if (chargeXp) {
                 double cost = 0D;
